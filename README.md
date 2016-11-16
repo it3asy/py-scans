@@ -1,17 +1,19 @@
-## 关于
-常常需要对批量目标进行处理，网站目录扫描、端口扫描等...整理一些脚本放在这里： 
-
-* scandirs.py 
+# 关于
+常常需要对批量目标进行处理，网站目录扫描、端口扫描等……整理一些脚本放在这里：  
+* scandirs.py  
     探测网站指定目录是否存在。  
-* scanports.py 
+    
+* scanports.py  
     探测主机指定端口是滞开放。  
+    
 * scanuris.py  
     探测网站路径状态，用于判断指定路径是否存在，类似于wscan。
 
-## 场景
+
+# 场景
 
 1. 批量网站快速查找WebLogic控制台  
-    python scandirs.py --targets=targets.txt --dir=console --go
+    python scandirs.py --targets=targets.txt --dict=console --go
 
 
 2. 批量网站中快速查找编辑器  
