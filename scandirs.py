@@ -90,24 +90,29 @@ def scan_thread():
 						_status = -1
 
 				_spaces = ' ' * (64-len(_url))
-				sys.stdout.write('{0}{1}[{2}] \r'.format(_url, _spaces, _status))
-				sys.stdout.flush()
 
 				if _status in [302,301]:
 					_location = _resp.headers['location']
 					if _location.endswith(_dir+'/'):
-						sys.stdout.write('\n')
+						sys.stdout.write('{0}{1}[{2}] \n'.format(_url, _spaces, _status))
+						sys.stdout.flush()
 						if g_nogreedy:
 							_break = True
 							break
 						else:
 							continue
+					else:
+						sys.stdout.write('{0}{1}[{2}] \r'.format(_url, _spaces, _status))
+						sys.stdout.flush()
 				elif _status == -1:
-					sys.stdout.write('\n')
+					sys.stdout.write('{0}{1}[{2}] \r'.format(_url, _spaces, _status))
+					sys.stdout.flush()
 					_break = True
 					break
 				else:
-					continue
+					sys.stdout.write('{0}{1}[{2}] \r'.format(_url, _spaces, _status))
+					sys.stdout.flush()
+
 
 
 def parser_error(err):
