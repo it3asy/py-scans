@@ -1,5 +1,6 @@
 #coding: utf-8
 
+import re
 import requests
 import urlparse
 import Queue
@@ -36,9 +37,9 @@ def load_targets(_file=None,_target=None):
 			g_queue.put(a)
 	return g_queue.qsize()
 
-def load_dicts(_file=None,_dir=None):
-	if _dir:
-		g_dicts.append(g_prefix+_dir+g_suffix)
+def load_dicts(_file=None,_uri=None):
+	if _uri:
+		g_dicts.append(g_prefix+_uri+g_suffix)
 	if _file:
 		for x in file(_file,'r').readlines():
 			g_dicts.append(g_prefix+x.strip()+g_suffix)
@@ -78,16 +79,38 @@ def scan_thread():
 		for _weburl in _weburls:
 			if _break:
 				break
-			for _dir in g_dicts:
+			for _uri in g_dicts:
 				g_count = g_count + 1
-				_url = _weburl.strip('/') + '/' + _dir
+				_url = _weburl.strip('/') + '/' + _uri
+				_header = {
+					'User-Agent': 'Mozilla/5.0 (Windows NT 5.2; rv:38.0) Gecko/20100101 Firefox/38.0',
+					'Cookie': ''
+					}
+				_req = requests.session()
 				try:
-					_resp = requests.get(url=_url, timeout=10, verify=False, allow_redirects=False)
+					_resp = _req.get(url=_url, timeout=10, verify=False, headers=_header, allow_redirects=False)
 					_status = _resp.status_code
 					_content = _resp.content
+
+					# bypass some WAFs
+					# 整个http请求过程要独立出来, 以后有空再搞吧.
+
+					# t3_ar_guard
+					if re.search('<body onload="t3_ar_guard\(\);">', _content):
+						_match = re.search('\'document\|href\|location\|cookie\|([0-9a-zA-Z_]*?)\|path\|([0-9]*?)\|([0-9]*?)\'', _content)
+						if _match:
+							_header['Cookie'] = ";%s=%s/%s" % (_match.group(1), _match.group(3), _match.group(2))
+							_resp = _req.get(url=_url, timeout=10, verify=False, headers=_header, allow_redirects=False)
+							_status = _resp.status_code
+							_content = _resp.content
+
+					# safedog
+					if re.search('self\.location="(/\?WebShieldSessionVerify=[0-9a-zA-Z]+?)";', _content):
+						pass
+
 				except Exception as e:
 					try:
-						_resp = requests.get(url=_url, timeout=10, verify=False, allow_redirects=False)
+						_resp = _req.get(url=_url, timeout=10, verify=False, allow_redirects=False)
 						_status = _resp.status_code
 						_content = _resp.content
 					except Exception as e:
@@ -130,10 +153,10 @@ def parse_args():
 	parser.add_argument('--nogreedy', action='store_true')	
 	parser.add_argument('--status', metavar='STATUS1,STATUS2,...', dest='_status', default=None, required=True, help='指定状态,多种状态用\',\'分隔,默认[301,302]')
 	parser.add_argument('--content', metavar='KEYWORD', dest='_content_key', default='', help='返回页面内容包含关键字')
-	parser.add_argument('--prefix', metavar='PREFIX', dest='_prefix', default='', help='拼接目录前缀')
-	parser.add_argument('--suffix', metavar='SUFFIX', dest='_suffix', default='', help='拼接目录后缀')
-	parser.add_argument('--dir', metavar='DIRECTORY', dest='_dir', default=None, help='指定目录')
-	parser.add_argument('--target', metavar='TARGET', dest='_target', default=None, help='扫描目标')
+	parser.add_argument('--prefix', metavar='PREFIX', dest='_prefix', default='', help='拼接路径前缀')
+	parser.add_argument('--suffix', metavar='SUFFIX', dest='_suffix', default='', help='拼接路径后缀')
+	parser.add_argument('--uri', metavar='URI', dest='_uri', default=None, help='指定路径')
+	parser.add_argument('--target', metavar='URL', dest='_target', default=None, help='扫描目标')
 	parser.add_argument('--targets', metavar='FILE', dest='_targets', default=None, help='从FILE文件读取扫描目标')
 	parser.add_argument('--dict', metavar='FILE', dest='_dict', default=None, help='从FILE文件读取路径字典')
 	parser.add_argument('--threads', metavar='COUNT', dest='_threads', default=None, type=int, help='线程数')
@@ -148,7 +171,7 @@ if __name__ == '__main__':
 	g_recursive = _args.recursive
 	g_content_key = _args._content_key
 
-	_dics = load_dicts(_file=_args._dict,_dir=_args._dir)
+	_dics = load_dicts(_file=_args._dict,_uri=_args._uri)
 	
 	if _args._status:
 		g_status = [int(x) for x in _args._status.split(',')]
@@ -158,7 +181,7 @@ if __name__ == '__main__':
 	elif _args._target:
 		_tars = load_targets(_target = _args._target)
 
-	print '---- %s targets, %s dirs -----' % (_tars,_dics)
+	print '---- %s targets, %s uris -----' % (_tars,_dics)
 
 	if _args.go:
 		_threads = []
