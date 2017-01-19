@@ -81,6 +81,13 @@ def scan_thread():
 				break
 			for _uri in g_dicts:
 				g_count = g_count + 1
+				if '%path%' in _uri:
+					_pathArray = urlparse.urlparse(_weburl.strip('/')).path.split('/')
+					_path = _pathArray[len(_pathArray)-1]
+					if  _path != '':
+						_uri = _uri.replace('%path%',_path)
+					else:
+						continue
 				_url = _weburl.strip('/') + '/' + _uri
 				_header = {
 					'User-Agent': 'Mozilla/5.0 (Windows NT 5.2; rv:38.0) Gecko/20100101 Firefox/38.0',
@@ -116,11 +123,16 @@ def scan_thread():
 					except Exception as e:
 						_status = -1
 
-				_spaces = ' ' * (64-len(_url))
+				if len(_url)<64:
+					_spaces = ' ' * (64-len(_url))
+				else:
+					_spaces = ' '
 				
 				_ret = True
 				if _status == -1:
-					sys.stdout.write('{0}{1}[{2}] \r'.format(_url, _spaces, _status))
+					_log = '{0}{1}[{2}] \r'.format(_url, _spaces, _status)
+					sys.stdout.write(_log)
+					sys.stdout.write(' '*len(_log)+'\r')
 					sys.stdout.flush()
 					_break = True
 					break
