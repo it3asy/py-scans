@@ -150,7 +150,9 @@ def scan_thread():
 					else:
 						continue
 				else:
-					sys.stdout.write('{0}{1}[{2}] \r'.format(_url, _spaces, _status))
+					_log = '{0}{1}[{2}] \r'.format(_url, _spaces, _status)
+					sys.stdout.write(_log)
+					sys.stdout.write(' '*len(_log)+'\r')
 					sys.stdout.flush()
 
 
