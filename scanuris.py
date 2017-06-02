@@ -95,7 +95,10 @@ def scan_thread():
 					}
 				_req = requests.session()
 				try:
-					_resp = _req.get(url=_url, timeout=10, verify=False, headers=_header, allow_redirects=False)
+					if g_verb == 'GET':
+						_resp = _req.get(url=_url, timeout=10, verify=False, headers=_header, allow_redirects=False)
+					elif g_verb == 'POST':
+						_resp = _req.post(url=_url, timeout=10, verify=False, headers=_header, allow_redirects=False)
 					_status = _resp.status_code
 					_content = _resp.content
 
@@ -117,7 +120,10 @@ def scan_thread():
 
 				except Exception as e:
 					try:
-						_resp = _req.get(url=_url, timeout=10, verify=False, allow_redirects=False)
+						if g_verb == 'GET':
+							_resp = _req.get(url=_url, timeout=10, verify=False, allow_redirects=False)
+						elif g_verb == 'POST':
+							_resp = _req.post(url=_url, timeout=10, verify=False, allow_redirects=False)
 						_status = _resp.status_code
 						_content = _resp.content
 					except Exception as e:
@@ -165,6 +171,7 @@ def parse_args():
 	parser.error = parser_error
 	parser.add_argument('--recursive', action='store_true')
 	parser.add_argument('--nogreedy', action='store_true')	
+	parser.add_argument('--verb', metavar='VERB', dest='_verb', default='GET', help='请求方式[GET|POST]')
 	parser.add_argument('--status', metavar='STATUS1,STATUS2,...', dest='_status', default=None, required=True, help='指定状态,多种状态用\',\'分隔,默认[301,302]')
 	parser.add_argument('--content', metavar='KEYWORD', dest='_content_key', default='', help='返回页面内容包含关键字')
 	parser.add_argument('--prefix', metavar='PREFIX', dest='_prefix', default='', help='拼接路径前缀')
@@ -186,6 +193,12 @@ if __name__ == '__main__':
 	g_content_key = _args._content_key
 
 	_dics = load_dicts(_file=_args._dict,_uri=_args._uri)
+
+	if _args._verb:
+		g_verb = _args._verb.upper()
+		if not g_verb in ['GET','POST']:
+			sys.stdout.write('* invalid http method [%s]!\n' % g_verb)
+			sys.exit(-1)
 	
 	if _args._status:
 		g_status = [int(x) for x in _args._status.split(',')]
