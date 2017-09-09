@@ -38,6 +38,7 @@ def scan_thread():
 		_ipaddr = g_queue.get()
 		for _port in g_ports:
 			_places = ' ' * (18-len(_ipaddr))
+			_spaces = ' ' * 4
 			try:
 				_s = socket.socket()
 				_s.connect((_ipaddr,_port))
@@ -45,7 +46,7 @@ def scan_thread():
 			except:
 				_open = False
 			if _open:
-				sys.stdout.write('{0}{1}{2}\n'.format(_ipaddr,_places,_port))
+				sys.stdout.write('{0}{1}{2}{3}\n'.format(_ipaddr,_places,_port,_spaces))
 			else:
 				sys.stdout.write('{0}{1}{2}\r'.format(_ipaddr,_places,_port))
 			sys.stdout.flush()
